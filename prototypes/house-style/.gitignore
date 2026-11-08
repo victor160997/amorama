@@ -1,0 +1,5 @@
+# Fotos de pessoas reais e imagens geradas: NUNCA no git (repositório público)
+photos/
+out/
+.env
+__pycache__/
