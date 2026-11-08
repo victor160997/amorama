@@ -9,7 +9,7 @@
 
 ## Antes de rodar (só o fundador pode fazer)
 
-1. **Contas e chaves.** Google AI Studio (Nano Banana 2.1, pré-pago) e Replicate (FLUX 3 Image e Seedream 5.0 Pro). Copie `.env.example` para `.env` e preencha. O `.env` está no `.gitignore`.
+1. **Chave.** Decisão de 2026-11-08: o protótipo usa **fal.ai** para os três modelos (créditos já existentes). Produção troca para Gemini direto (Nano Banana) e Replicate (FLUX, Seedream), que são mais baratos. Copie `.env.example` para `.env` e preencha `FAL_KEY`. O `.env` está no `.gitignore`.
 2. **Fotos.** `photos/<nome>/` para cada pessoa do casal, 3 fotos: frontal, 3/4, corpo inteiro, luz natural, sem óculos escuros. Exatamente duas pastas. **O repositório é público: `photos/` e `out/` estão no `.gitignore` e não podem ser commitados nunca.**
 3. **Consentimento.** Os termos da BFL (FLUX) exigem consentimento documentado da pessoa retratada, e a pesquisa de LGPD pede o mesmo. Guarde uma mensagem escrita do seu par autorizando o teste, fora do repositório.
 4. `uv` instalado (já está nesta máquina).
@@ -19,11 +19,11 @@
 ```bash
 cd prototypes/house-style
 uv run generate.py --phase direction --dry-run   # confere plano e custo sem gastar
-uv run generate.py --phase direction             # fase 0: 12 imagens, ~US$ 0,45
+uv run generate.py --phase direction             # fase 0: 12 imagens, ~US$ 0,55
 uv run contact_sheet.py && xdg-open out/index.html
 # escolhida a direção (ex.: A):
-uv run generate.py --phase model --direction A   # fase A: 24 imagens, ~US$ 0,85
-uv run generate.py --phase couple --direction A  # fase B: 9 imagens, ~US$ 0,35
+uv run generate.py --phase model --direction A   # fase A: 24 imagens, ~US$ 1,40
+uv run generate.py --phase couple --direction A  # fase B: 9 imagens, ~US$ 0,60
 uv run generate.py --phase pivot --direction A --model nano   # fase C: nível 3 no vencedor
 ```
 

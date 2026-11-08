@@ -118,15 +118,17 @@ Ordem importa pouco nos modelos atuais, mas o bloco de fidelidade vem antes do e
 
 ## 7. Plano de teste (dentro de ~US$ 15, 1K em tudo)
 
+Provedor do protótipo: **fal.ai** (decisão de 2026-11-08, créditos já existentes). Preços fal.ai de 2026-11-07: Nano Banana 2.1 ≈ US$ 0,046 com 3 fotos de entrada, FLUX 3 Image US$ 0,048, Seedream 5.0 Pro ≈ US$ 0,077 com 3 entradas. Em produção, Gemini direto e Replicate baixam isso em 15 a 50%.
+
 | Fase | Pergunta | Modelos | Imagens | Custo estimado |
 |---|---|---|---|---|
-| 0. Direção | Qual das três direções o fundador quer? | Nano Banana 2.1 (o mais barato) | 3 direções × 2 pessoas × 2 gerações = 12 | ≈ US$ 0,45 |
-| A. Modelo | Qual modelo preserva melhor a semelhança na direção escolhida? | Nano Banana 2.1, FLUX 3 Image (Replicate), Seedream 5.0 Pro (Replicate) | 3 × 2 pessoas × 4 gerações = 24 | ≈ US$ 0,85 |
-| B. Casal | Os dois juntos sem mistura de traços? | Os 3 | 3 × 3 stills de casal = 9 | ≈ US$ 0,35 |
-| C. Pivot (a) | O nível 3 reconhece melhor ou pior? | Modelo vencedor | 2 pessoas × 2 gerações = 4 | ≈ US$ 0,15 |
-| Opcional | Teto de qualidade: Nano Banana Pro na fase A | Nano Banana Pro | 8 | ≈ US$ 1,10 |
+| 0. Direção | Qual das três direções o fundador quer? | Nano Banana 2.1 (o mais barato) | 3 direções × 2 pessoas × 2 gerações = 12 | ≈ US$ 0,55 |
+| A. Modelo | Qual modelo preserva melhor a semelhança na direção escolhida? | Nano Banana 2.1, FLUX 3 Image, Seedream 5.0 Pro | 3 × 2 pessoas × 4 gerações = 24 | ≈ US$ 1,40 |
+| B. Casal | Os dois juntos sem mistura de traços? | Os 3 | 3 × 3 stills de casal = 9 | ≈ US$ 0,60 |
+| C. Pivot (a) | O nível 3 reconhece melhor ou pior? | Modelo vencedor | 2 pessoas × 2 gerações = 4 | ≈ US$ 0,30 |
+| Opcional | Teto de qualidade: Nano Banana Pro na fase A | Nano Banana Pro | 8 | ≈ US$ 1,20 |
 | Reserva | Iterar prompt, refazer falhas | | | ≈ US$ 5 |
-| **Total** | | | ≈ 57 a 65 imagens | **≈ US$ 3 a 8**, teto US$ 15 |
+| **Total** | | | ≈ 57 a 65 imagens | **≈ US$ 3 a 9**, teto US$ 15 |
 
 Avaliação: nota cega 1–5 por imagem em semelhança (eliminatória: média < 3 descarta), aderência ao House Style e artefatos; na fase B, contagem de misturas/trocas de traços (qualquer uma é falha grave). Latência e custo real medidos pelo harness, não opinados. Regra de decisão herdada da pesquisa de modelos de imagem: semelhança 35%, estabilidade 25%, duas identidades 20%, House Style 15%, artefatos 5%.
 
