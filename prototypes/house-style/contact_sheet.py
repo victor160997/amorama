@@ -39,7 +39,7 @@ def main() -> None:
         if r["person"] not in v["people"]:
             v["people"].append(r["person"])
         v["cells"][(r["person"], r["model"])].append(
-            {"src": r["path"].removeprefix("out/"), "lat": r.get("latency_s"), "cost": r.get("cost_usd"), "k": r["k"]}
+            {"src": r["path"].removeprefix("out/"), "lat": round(r["inference_s"], 1) if r.get("inference_s") else r.get("latency_s"), "cost": r.get("cost_usd"), "k": r["k"]}
         )
     data = {
         tag: {
