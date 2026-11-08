@@ -20,9 +20,9 @@ Uma imagem por pessoa, 9:16, 1K. Ela tem duas funções: ser o que o Casal aprov
 |---|---|---|
 | Enquadramento | Da cintura para cima, vista 3/4 virada para a câmera, linha dos olhos no terço superior | Rosto grande o bastante para julgar semelhança; o 3/4 mostra nariz e queixo melhor que o frontal |
 | Expressão | Sorriso leve, olhar para a câmera | Neutro o bastante para servir de referência em qualquer Scene |
-| Mãos | Fora do quadro | Mãos são a maior fonte de artefato e não ajudam na identidade |
+| Mãos | Naturais, relaxadas | Fase 0: o modelo ignorou "fora do quadro" e fez mãos boas em 12 de 12; proibir só gastava prompt |
 | Fundo | Gradiente liso na cor da direção, sem cenário | Nada compete com o rosto; o modelo de vídeo não herda cenário errado |
-| Roupa | Parecida com a das fotos de referência, simplificada | Roupa é parte do reconhecimento ("é a jaqueta dela") |
+| Roupa | A mesma das fotos de referência, simplificada | Fase 0: o modelo copia a roupa sozinho e isso ajuda o reconhecimento ("é o vestido dela") |
 | Fotos de entrada | 3 por pessoa: frontal, 3/4 e corpo inteiro, luz natural, sem óculos escuros | Mesmo conjunto para todos os modelos |
 
 Alternativa descartada por enquanto: "ficha" com 3 vistas (frente, perfil, corpo inteiro) numa só imagem. Dá mais informação ao modelo de vídeo, mas divide a resolução do rosto por três e complica a Approval. Volta se a consistência entre Scenes falhar no tracer bullet.
@@ -87,7 +87,7 @@ Figura de vinil de colecionador fotografada em estúdio. Superfícies lisas e le
 | Proporções | Cabeça grande (1:4), corpo curto, olhos grandes, boca e nariz simplificados |
 | Textura | Vinil liso semi-brilhante, roupa em peça única sem dobras, cabelo em bloco esculpido |
 | Paleta | Saturada e alegre: fundo sólido em pastel saturado (menta, lavanda, amarelo-manteiga), roupa em cores planas |
-| Enquadramento | O da Character Sheet, mas corpo inteiro cabe no 9:16 por causa das proporções |
+| Enquadramento | O da Character Sheet, cintura para cima (fase 0: "corpo inteiro" encolheu o rosto) |
 | Evitar | Textura de pele realista, luz dramática, cenário |
 
 Aposta: o mais "produto", ótimo em thumbnail e no celular. Já nasce no nível 3 do dial; serve de prova de que a caricatura preserva o reconhecimento. Risco: parecer brinquedo infantil para um presente romântico.
@@ -132,7 +132,23 @@ Provedor do protótipo: **fal.ai** (decisão de 2026-11-08, créditos já existe
 
 Avaliação: nota cega 1–5 por imagem em semelhança (eliminatória: média < 3 descarta), aderência ao House Style e artefatos; na fase B, contagem de misturas/trocas de traços (qualquer uma é falha grave). Latência e custo real medidos pelo harness, não opinados. Regra de decisão herdada da pesquisa de modelos de imagem: semelhança 35%, estabilidade 25%, duas identidades 20%, House Style 15%, artefatos 5%.
 
-## 8. O que este protótipo não decide
+## 8. Resultados
+
+### Fase 0 (2026-11-08): direção
+
+Nano Banana 2.1 via fal.ai, 12 imagens, US$ 0,55, 12 a 26 s por imagem. Notas de semelhança do casal (1 a 5):
+
+| Direção | Notas | Média | Veredito |
+|---|---|---|---|
+| A Cinema caloroso (nível 2) | 5, 4, 5, 4 | 4,5 | **Escolhida** |
+| B Miniatura artesanal (nível 2) | 3, 2, 2, 2 | 2,25 | Reprovada (corte 3): a textura de massinha come os traços |
+| C Boneco colecionável (nível 3) | 1, 1, 1, 1 | 1,0 | Reprovada: caricatura + vinil perdem a pessoa |
+
+Observações de estilo: as duas gerações de cada pessoa saíram quase idênticas em A e B (boa estabilidade); único artefato foi poeira flutuante numa imagem de B; em C uma geração saiu de corpo inteiro. O modelo copiou a roupa das fotos em todas e ignorou "mãos fora do quadro" sem prejuízo; o guia foi ajustado (seção 1).
+
+Alerta para o pivot (a): o nível 3 em C tirou 1 em tudo. A fase C testa o nível 3 na direção A para separar o efeito da caricatura do efeito do vinil.
+
+## 9. O que este protótipo não decide
 
 - Formato do Script e das legendas (névoa do mapa).
 - Como a Character Sheet vira referência no modelo de vídeo (tracer bullet).

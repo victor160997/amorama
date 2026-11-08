@@ -6,8 +6,8 @@ Nunca citar estúdios ou franquias. Prompts em inglês.
 FRAMING = (
     "Character portrait of one person, 9:16 vertical, waist-up, three-quarter view "
     "turned toward the camera, eye line in the upper third of the frame, gentle smile, "
-    "looking at the camera, hands out of frame, clothing similar to the reference photos "
-    "but simplified."
+    "looking at the camera, relaxed natural hands, wearing the same clothing as in the "
+    "reference photos, simplified."
 )
 
 FIDELITY = (
@@ -61,7 +61,7 @@ DIRECTIONS = {
             "and mouth. Lighting: clean diffuse frontal studio light, soft contact shadow on the "
             "floor. Palette: bright and cheerful, flat solid colors on the clothing. Background: "
             "a seamless solid saturated-pastel backdrop (mint, lavender or butter yellow), no "
-            "scenery. Full body fits the vertical frame."
+            "scenery. Waist-up framing, the face fills the upper half of the frame."
         ),
     },
 }
