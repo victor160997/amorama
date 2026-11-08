@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["fal-client>=0.5", "google-genai>=2.3", "replicate>=1.0", "pillow>=10"]
+# dependencies = ["fal-client>=0.5", "google-genai>=2.3", "replicate>=1.0", "pillow>=10", "pillow-heif>=0.18"]
 # ///
 """PROTÓTIPO. Gera Character Sheets (e stills de casal) com 3 modelos para comparar o House Style.
 
@@ -34,9 +34,12 @@ import time
 import urllib.request
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageOps
+from pillow_heif import register_heif_opener
 
 import prompts
+
+register_heif_opener()  # fotos HEIC do iPhone
 
 HERE = Path(__file__).parent
 PHOTOS = HERE / "photos"
@@ -95,13 +98,13 @@ def people() -> list[str]:
 
 def photo_bytes(person: str, max_side: int = 1024) -> list[tuple[bytes, str]]:
     """Fotos da pessoa redimensionadas em memória (payload menor, menos tokens)."""
-    exts = {".jpg", ".jpeg", ".png", ".webp", ".heic"}
+    exts = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"}
     files = sorted(f for f in (PHOTOS / person).iterdir() if f.suffix.lower() in exts)
     if not files:
         sys.exit(f"Nenhuma foto em {PHOTOS / person}")
     out = []
     for f in files:
-        im = Image.open(f).convert("RGB")
+        im = ImageOps.exif_transpose(Image.open(f)).convert("RGB")  # respeita a rotação do iPhone
         im.thumbnail((max_side, max_side))
         buf = io.BytesIO()
         im.save(buf, format="JPEG", quality=85)
