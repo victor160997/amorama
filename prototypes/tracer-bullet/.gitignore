@@ -1,0 +1,5 @@
+# Story, Fichas, vídeos e chaves: NUNCA no git (repositório público)
+in/
+out/
+.env
+__pycache__/
