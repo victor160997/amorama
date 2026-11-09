@@ -49,3 +49,21 @@ Registrar as respostas literais no ticket, sem as imagens.
 2. **Final Video** (depois da montagem), por Scene: "Os dois continuam sendo as mesmas pessoas das imagens?" (4 de 4); "Viu algo deformado ou estranho?" (no máximo 1 Scene); com a Story em mãos, "que momento do texto é esta Scene?" (3 de 4).
 3. **Casal**: "Este vídeo conta a nossa história?" (sim ou não).
 4. **Fora do gate**: reação de 2 ou 3 casais de fora ("pagariam R$ X?"), só registrada.
+
+## Resultado (2026-11-09)
+
+Casal fundador, Story real de 192 caracteres. Imagens e vídeos não estão no repositório; só os números.
+
+| Etapa | Chamadas | Latência | Custo |
+|---|---|---|---|
+| Script (`claude-opus-5-5`, saída estruturada, sem edição manual) | 1 | 17 s | US$ 0,03 |
+| Scenes (Kling O3 Standard reference-to-video, 8 s, 9:16, Fichas como *elements*) | 4 ok + 1 erro de payload | 191 a 203 s cada (inferência ~188 s) | US$ 2,69 |
+| Regenerations | 0 | | |
+| Montagem (ffmpeg, 32 s, 1080×1920, música, legendas) | 1 | 48 s | 0 |
+| **Total** | | | **US$ 2,72** de 30 |
+
+- Painel cego de 3: **3 de 3** reconheceram as duas Fichas; no Final Video, "mesmas pessoas" nas 4 Scenes, nenhum artefato apontado. Casal: "conta a nossa história? sim, está perfeito". Reação de fora: "pagariam R$ 100, mas por mais tempo de vídeo talvez" (32 s pareceu curto para esse preço).
+- Extrapolação para 6 Scenes + 1 Regeneration: **US$ 4,88** (faixa go, ≤ US$ 8). Latência projetada após a Approval: 6 Scenes em paralelo ≈ 4,5 min; em série ≈ 21 min.
+- Saída nativa do Kling O3 Standard: **720×1280 a 24 fps**, reescalada para 1080p na montagem.
+- O Kling manteve a **roupa das Fichas** em todas as Scenes, ignorando "roupa de praia" no prompt: bom para consistência, e o Script não deve pedir troca de roupa.
+- Payload do `reference-to-video`: cada elemento exige `frontal_image_url` **e** `reference_image_urls` (a mesma Ficha nos dois funciona). Data URIs aceitas.

@@ -175,7 +175,7 @@ def main() -> None:
 
             if args.mode == "r2v":
                 endpoint = KLING_R2V
-                vargs = {"prompt": prompt, "elements": [{"frontal_image_url": u} for u in sheets],
+                vargs = {"prompt": prompt, "elements": [{"frontal_image_url": u, "reference_image_urls": [u]} for u in sheets],
                          "duration": str(seconds), "aspect_ratio": "9:16", "generate_audio": False}
             elif args.video == "kling":
                 endpoint = KLING_I2V
@@ -189,8 +189,9 @@ def main() -> None:
             res, m = fal_run(endpoint, vargs)
             video = fetch(res["video"]["url"])
         except Exception as e:  # noqa: BLE001
-            print(f" FALHOU: {type(e).__name__}: {e}")
-            record("scene", **base, error=f"{type(e).__name__}: {e}", cost_usd=0)
+            err = f"{type(e).__name__}: {str(e)[:300]}"  # o fal ecoa o payload (base64) nos erros
+            print(f" FALHOU: {err}")
+            record("scene", **base, error=err, cost_usd=0)
             continue
         path = dest / f"scene-{n}.try{k}.mp4"
         path.write_bytes(video)
