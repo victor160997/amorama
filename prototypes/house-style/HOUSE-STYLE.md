@@ -148,7 +148,37 @@ Observações de estilo: as duas gerações de cada pessoa saíram quase idênti
 
 Alerta para o pivot (a): o nível 3 em C tirou 1 em tudo. A fase C testa o nível 3 na direção A para separar o efeito da caricatura do efeito do vinil.
 
-## 9. O que este protótipo não decide
+
+### Fase A (2026-11-08): modelo
+
+Direção A nível 2, 4 gerações por pessoa e por modelo, via fal.ai. Notas de semelhança (1 a 5) de um avaliador em modo cego, as mesmas 8 imagens do Nano Banana incluem as 4 da fase 0 rejulgadas lado a lado:
+
+| Modelo | Marcelle | Victor | Média | Inferência mediana / p95 | Custo 8 img | Veredito |
+|---|---|---|---|---|---|---|
+| **FLUX 3 Image** | 5, 3, 4, 4 | 4, 5, 5, 5 | **4,38** | 26 s / 28 s | US$ 0,38 | **Escolhido** |
+| Seedream 5.0 Pro | 5, 4, 2, 5 | 4, 4, 4, 3 | 3,88 | 42 s / 104 s | US$ 0,61 | Reserva |
+| Nano Banana 2.1 | 5, 1, 2, 3 | 2, 2, 3, 2 | 2,50 | 19 s / 24 s | US$ 0,37 | Reprovado (corte 3) |
+
+Leitura de estilo: Nano Banana é o mais estilizado e o melhor enquadramento de Ficha, mas perdeu a pessoa; FLUX estiliza menos (render semirrealista) e desvia o fundo para gradiente multicolor, mas preserva o rosto; Seedream faz rosto menor e poses demais. Duas imagens do Nano Banana que tiraram 5 na fase 0 tiraram 5 e 2 na fase A: a nota depende do que está ao lado. O painel cego de 3 pessoas do gate rejulga tudo no tracer bullet.
+
+### Fase B (2026-11-08): casal
+
+3 stills (café, praia, dança) em FLUX e Seedream, 6 imagens, US$ 0,41. **Zero misturas ou trocas de traços** em ambos. Roupa da Marcelle mudou de cor na cena da dança nos dois modelos. FLUX quase abandona a estilização em cena de casal (semirrealismo); Seedream segura melhor. Como as Scenes do produto vêm do modelo de vídeo a partir das Fichas, e não destes stills, o efeito real fica para o tracer bullet.
+
+### Fase C (2026-11-08): pivot (a)
+
+Nível 3 na direção A, FLUX, 4 imagens, US$ 0,19. **O FLUX ignorou a caricatura**: saída igual ao nível 2 com olhos um pouco maiores; uma imagem ganhou um piercing inexistente. Conclusão: o pivot (a) do gate não existe por prompt no FLUX. Se o painel reprovar a semelhança no tracer bullet, pivot (a) = Seedream 5.0 Pro nível 3 (não testado), senão ir direto ao pivot (b).
+
+## 9. Decisão
+
+- **House Style v1 = direção A (Cinema caloroso), nível 2**, prompt de `prompts.py` (`character_sheet_prompt("A", 2)`). Direções B e C descartadas. O look real do v0 é o que o FLUX produz com esse prompt: estilização mais leve que a descrita, fundo em gradiente pastel. Reforçar o prompt para mais estilização é ajuste do tracer bullet, não decisão deste ticket.
+- **Character Sheet** = uma imagem 9:16 1K por pessoa, 3/4, cintura para cima, roupa das fotos, fundo liso (seção 1).
+- **Modelo de imagem = FLUX 3 Image**, reserva Seedream 5.0 Pro; Nano Banana 2.1 reprovado em semelhança.
+- **Provedor**: fal.ai no protótipo e no tracer bullet (créditos existentes). Produção: BFL direto ou Replicate (metade do preço no Replicate; ToS da BFL exige consentimento documentado da pessoa retratada, já previsto no fluxo).
+- **Custo medido** por Character Sheet no fal.ai: US$ 0,048 (FLUX); 2 Fichas + 1 Regeração ≈ US$ 0,15 por Order.
+- **Total gasto neste ticket**: US$ 2,34 de US$ 15 (42 imagens + 1 fumaça). Sobram ≈ US$ 12,66 do envelope de imagem, que podem reforçar o tracer bullet.
+
+## 10. O que este protótipo não decide
 
 - Formato do Script e das legendas (névoa do mapa).
 - Como a Character Sheet vira referência no modelo de vídeo (tracer bullet).
