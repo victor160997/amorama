@@ -274,7 +274,7 @@ def plan(args) -> list[dict]:
                 for k in range(args.n or 4):
                     jobs.append(dict(model=m, direction=args.direction, level=args.level, person=p, k=k))
     elif args.phase == "couple":
-        for m in ("nano", "flux", "seedream"):
+        for m in args.models.split(","):
             for i, scene in enumerate(prompts.COUPLE_SCENES):
                 jobs.append(dict(model=m, direction=args.direction, level=args.level, person="casal", k=i, scene=scene))
     elif args.phase == "pivot":
@@ -298,6 +298,7 @@ def main() -> None:
     ap.add_argument("--level", type=int, choices=[1, 2, 3], default=2)
     ap.add_argument("--person")
     ap.add_argument("--n", type=int)
+    ap.add_argument("--models", default="nano,flux,seedream", help="fase couple: modelos, separados por vírgula")
     ap.add_argument("--with-pro", action="store_true", help="inclui Nano Banana Pro na fase model (só --provider direct)")
     ap.add_argument("--upload", action="store_true", help="fal: subir fotos ao CDN em vez de data URIs")
     ap.add_argument("--cap", type=float, default=15.0, help="teto de gasto acumulado em USD")
