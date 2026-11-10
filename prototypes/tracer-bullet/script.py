@@ -87,7 +87,7 @@ def main() -> None:
         sys.exit(f"Script inválido (stop_reason={resp.stop_reason}): {resp.content}")
 
     cost = resp.usage.input_tokens * PRICE_IN + resp.usage.output_tokens * PRICE_OUT
-    OUT.mkdir(exist_ok=True)
+    OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "script.json").write_text(json.dumps({**script.model_dump(), "seconds": args.seconds}, ensure_ascii=False, indent=2))
     record("script", model=MODEL, latency_s=latency, cost_usd=round(cost, 4),
            in_tokens=resp.usage.input_tokens, out_tokens=resp.usage.output_tokens, story_chars=len(story))

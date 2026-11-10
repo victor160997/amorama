@@ -32,7 +32,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from common import HOUSE_STYLE, IN, OUT, guard, load_env, people, record, rows
+from common import HOUSE_STYLE, OUT, SHEETS, guard, load_env, people, record, rows
 
 sys.path.insert(0, str(HOUSE_STYLE))
 import prompts  # noqa: E402  (House Style v1: direção A, nível 2)
@@ -80,7 +80,7 @@ def sheet_urls(upload: bool) -> list[str]:
     """Por padrão data URIs (nada fica no CDN do fal). --upload sobe ao CDN se o endpoint recusar."""
     import fal_client
 
-    paths = [IN / "sheets" / f"{p}.png" for p in people()]
+    paths = [SHEETS / f"{p}.png" for p in people()]
     if upload:
         return [fal_client.upload_file(str(p)) for p in paths]
     return [data_uri(p) for p in paths]

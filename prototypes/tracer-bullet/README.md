@@ -67,3 +67,27 @@ Casal fundador, Story real de 192 caracteres. Imagens e vídeos não estão no r
 - Saída nativa do Kling O3 Standard: **720×1280 a 24 fps**, reescalada para 1080p na montagem.
 - O Kling manteve a **roupa das Fichas** em todas as Scenes, ignorando "roupa de praia" no prompt: bom para consistência, e o Script não deve pedir troca de roupa.
 - Payload do `reference-to-video`: cada elemento exige `frontal_image_url` **e** `reference_image_urls` (a mesma Ficha nos dois funciona). Data URIs aceitas.
+
+## Rodada 2 (2026-11-09): Story narrativa + 1 Regeneration
+
+Responde ao ticket [Tracer bullet 2: Story narrativa + 1 Regeneration (≤ US$ 5)](https://github.com/victor160997/amorama/issues/19). Rodada isolada da primeira: Story em `in/tb2/story.txt`, saídas e livro-caixa em `out/tb2/`, mesmas Character Sheets.
+
+```bash
+export TB_RUN=tb2 TB_CAP=5
+uv run script.py --scenes 2 --seconds 8
+uv run scenes.py                      # 2 Scenes
+uv run scenes.py --scene 1 --regen    # a Regeneration, mesmo prompt e mesmas Fichas
+python3 report.py
+```
+
+| Etapa | Chamadas | Latência | Custo |
+|---|---|---|---|
+| Script (`claude-opus-5-5`, sem edição manual) | 1 | 12 s | US$ 0,03 |
+| Scenes (Kling O3 Standard reference-to-video, 8 s) | 2 | 215 e 220 s | US$ 1,34 |
+| Regeneration da Scene 1 (mesmo prompt) | 1 | 197 s | US$ 0,67 |
+| **Total** | | | **US$ 2,04** de 5 |
+
+- Story narrativa de 4 parágrafos (598 caracteres). O Script escolheu o primeiro beijo (na fila de uma boate, à noite) e um passeio de bondinho; só a Scene 1 tem contato físico. Dança e abraço seguem sem teste.
+- **Identidade e roupa seguram no beijo**: rosto, cabelo, barba, vestido, colar e camiseta iguais às Fichas nos 3 clipes, sem troca de identidade nem de cor de roupa. Casal: "mesmas pessoas, sem troca de identidade ou roupa".
+- **A Regeneration mantém as pessoas, mas é outra tomada**: os dois trocam de lado, o cenário muda, ficam de perfil o tempo todo e **o beijo pedido no prompt não acontece** (a legenda fala em beijo). O casal ainda assim disse que combina com as outras Scenes e que ficaria satisfeito.
+- A Scene original também desviou do prompt: o beijo acontece no início e no fim (pedido só no fim) e o cenário saiu pôr do sol ao ar livre, não noite na porta de uma boate.
