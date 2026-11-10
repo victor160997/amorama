@@ -91,3 +91,32 @@ python3 report.py
 - **Identidade e roupa seguram no beijo**: rosto, cabelo, barba, vestido, colar e camiseta iguais às Fichas nos 3 clipes, sem troca de identidade nem de cor de roupa. Casal: "mesmas pessoas, sem troca de identidade ou roupa".
 - **A Regeneration mantém as pessoas, mas é outra tomada**: os dois trocam de lado, o cenário muda, ficam de perfil o tempo todo e **o beijo pedido no prompt não acontece** (a legenda fala em beijo). O casal ainda assim disse que combina com as outras Scenes e que ficaria satisfeito.
 - A Scene original também desviou do prompt: o beijo acontece no início e no fim (pedido só no fim) e o cenário saiu pôr do sol ao ar livre, não noite na porta de uma boate.
+
+## Rodada 3 (2026-11-09): Final Video de 9 Scenes (72 s)
+
+Responde ao ticket [Tracer bullet 3: Final Video de 10 Scenes (≤ US$ 10)](https://github.com/victor160997/amorama/issues/20). Mesma Story narrativa da rodada 2 (`in/tb3/story.txt`), mesmas Character Sheets, saídas em `out/tb3/`. O harness ganhou: faixa de Scenes no Script (`--scenes 8-10`, Claude escolhe e declara quantos momentos a Story sustenta), `--parallel`, `--retake` e `strips.py` (tira de 6 quadros por Scene para a conferência Scene × legenda). O prompt do Script deixou de permitir troca de roupa.
+
+```bash
+export TB_RUN=tb3 TB_CAP=10
+uv run script.py --scenes 8-10 --seconds 8
+uv run scenes.py --scene 1            # fumaça
+uv run scenes.py --parallel 8         # as demais
+uv run strips.py                      # out/tb3/tmp/strip-<n>.png
+uv run scenes.py --scene N --retake   # se a conferência reprovar
+uv run assemble.py && python3 report.py
+```
+
+| Etapa | Chamadas | Latência | Custo |
+|---|---|---|---|
+| Script (`claude-opus-5-5`, faixa 8 a 10, sem edição manual) | 1 | 30 s | US$ 0,06 |
+| Scenes (Kling O3 Standard reference-to-video, 8 s) | 9, sem falha | 190 a 226 s cada; lote de 8 em paralelo em 227 s de relógio | US$ 6,05 |
+| Retakes / Regenerations | 0 | | |
+| Montagem (ffmpeg, 72,4 s, 1080×1920, 54,9 MB) | 1 | 103 s | 0 |
+| **Total** | | | **US$ 6,11** de 10 (mais US$ 0,06 do Script de comparação com a Story curta) |
+
+- **A Story narrativa (662 caracteres) rendeu 9 momentos, não 10**: Claude declarou 9 distintos e recusou encher o décimo. O fundador: "9 bastam". A **Story curta (192 caracteres, lista de 6 lugares) só sustenta 6** e precisou dividir dois lugares em duas Scenes para chegar a 8.
+- **Consistência segura nas 9 Scenes**: rosto, cabelo, barba, vestido, colar e camiseta iguais às Fichas em bar, rua à noite, banco, trilha, parque, trenó, bondinho, mirante e sofá. Fundador: "sim, nas 9". House Style uniforme.
+- **0 Retakes**. Todas as 9 Scenes mostram a ação da legenda (o beijo aconteceu desta vez). Ficaram no limite, e o fundador entregaria assim: Scene 8 (órbita de câmera deixa ela de costas no meio da Scene e os dois trocam de lado) e Scene 2 (placa com pseudo-texto no topo, apesar de "no text" no prompt). Órbita é o movimento de câmera mais arriscado.
+- **Tempo do fundador na conferência: até 5 min** (assistir o Final Video contra as legendas). Tempo de máquina do Pedido: ~30 s de Script + ~4 min de Scenes em paralelo + ~1,7 min de montagem ≈ 6 a 7 min.
+- 8 chamadas simultâneas ao Kling no fal não sofreram fila nem limite: a latência por Scene em paralelo (190 a 223 s) é a mesma que em série.
+- Custo pela política do v0 (10 Scenes): US$ 6,88 sem Retake nem Regeneration; pior caso (3 Retakes + 2 Regenerations de Scene + 6 de Ficha) US$ 10,53.

@@ -35,12 +35,14 @@ class Scene(BaseModel):
 
 class Script(BaseModel):
     title: str
+    distinct_moments: int = Field(description="How many distinct, filmable moments the Story itself supports, before any padding")
+    scene_count_reason: str = Field(description="Em PT-BR, 1 ou 2 frases: por que este número de Scenes e não mais ou menos")
     scenes: list[Scene]
 
 
 SYSTEM = """You turn a couple's own written story into the Script of a short vertical animated video.
 
-The video is {n} Scenes of about {seconds} seconds each, shown in order with one subtitle line per Scene and background music. There is no narration and no dialogue audio, so each Scene has to read on its own as a moving image.
+The video is {n} of about {seconds} seconds each, shown in order with one subtitle line per Scene and background music. There is no narration and no dialogue audio, so each Scene has to read on its own as a moving image.
 
 How the Scenes get made, which shapes what a good visual_prompt looks like: an image-to-video model receives one approved reference image per person and your visual_prompt. It refers to the two people only through the literal tokens @Element1 ({p1}) and @Element2 ({p2}). The harness appends the visual style and the identity rules afterwards, so leave style, rendering and "keep their faces" instructions out; your job is content.
 
@@ -49,16 +51,16 @@ The risk this video lives or dies on is likeness: the two characters must stay r
 - both people in frame, in a medium or medium-close shot, faces visible to the camera for most of the Scene;
 - one concrete setting with a few specific details taken from the Story, and the time of day or light;
 - one slow camera move at most (slow push-in, gentle orbit, or static).
-Always write "@Element1" and "@Element2" instead of names or descriptions of the people; never describe their face, hair, skin or body, because the reference images carry that. Clothing may be mentioned only when the Story makes it matter (a wedding, a beach). Avoid readable text, signs, screens, logos, crowds, children, pets, and other characters with visible faces: the product has exactly two people on screen.
+Always write "@Element1" and "@Element2" instead of names or descriptions of the people; never describe their face, hair, skin or body, because the reference images carry that. Never describe or change their clothing either: the video model keeps the outfit of the reference images in every Scene, so a Scene that depends on a costume (a wedding dress, swimwear) will not come out as written. Avoid readable text, signs, screens, logos, crowds, children, pets, and other characters with visible faces: the product has exactly two people on screen.
 
-Choose the {n} moments that the couple would most want to see again, in the order they happened, so that someone who knows them recognises their story. Stay faithful to what the Story says: do not invent events, places or details it does not support. If the Story is thin, prefer a quiet, true moment over an invented dramatic one.
+Choose the moments that the couple would most want to see again, in the order they happened, so that someone who knows them recognises their story. Stay faithful to what the Story says: do not invent events, places or details it does not support. If the Story is thin, prefer a quiet, true moment over an invented dramatic one.{range_rule}
 
 Each subtitle is one line in Brazilian Portuguese, at most 12 words, in the couple's own voice and tone (first person plural when it fits), without emojis or hashtags. Together the subtitles should read as a tiny version of their story. story_moment is one sentence in Portuguese saying which part of the Story the Scene shows. title is a short Portuguese title for the video. Write every visual_prompt in English, 40 to 90 words."""
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--scenes", type=int, default=4)
+    ap.add_argument("--scenes", default="4", help="número fixo (4) ou faixa (8-10): na faixa, Claude escolhe")
     ap.add_argument("--seconds", type=int, default=8)
     args = ap.parse_args()
 
@@ -69,13 +71,22 @@ def main() -> None:
     story = story_path.read_text().strip()
     p1, p2 = people()
 
+    lo, hi = (int(x) for x in (args.scenes.split("-") if "-" in args.scenes else (args.scenes, args.scenes)))
+    n_text = f"{lo} Scenes" if lo == hi else f"between {lo} and {hi} Scenes"
+    range_rule = "" if lo == hi else (
+        f"\n\nYou decide the number of Scenes, from {lo} to {hi}. Every Scene must be a visibly different moment "
+        "(a different place or a different action), never the same moment split in two or a generic filler. "
+        f"Use {hi} only if the Story really holds {hi} such moments; otherwise use fewer, down to {lo}. "
+        f"If the Story holds fewer than {lo}, still write {lo}, staying as close to the Story as you can, and say so honestly: "
+        "distinct_moments is the count the Story itself supports, and scene_count_reason explains your choice.")
+
     client = anthropic.Anthropic()
     t0 = time.time()
     resp = client.messages.parse(
         model=MODEL,
         max_tokens=16000,
         output_config={"effort": "high"},
-        system=SYSTEM.format(n=args.scenes, seconds=args.seconds, p1=p1, p2=p2),
+        system=SYSTEM.format(n=n_text, seconds=args.seconds, p1=p1, p2=p2, range_rule=range_rule),
         messages=[{"role": "user", "content": f"The couple's Story, exactly as they wrote it:\n\n<story>\n{story}\n</story>"}],
         output_format=Script,
     )
@@ -83,16 +94,18 @@ def main() -> None:
     if resp.stop_reason == "refusal":
         sys.exit(f"Claude recusou a Story: {resp.stop_details}")
     script = resp.parsed_output
-    if script is None or len(script.scenes) != args.scenes:
+    if script is None or not lo <= len(script.scenes) <= hi:
         sys.exit(f"Script inválido (stop_reason={resp.stop_reason}): {resp.content}")
 
     cost = resp.usage.input_tokens * PRICE_IN + resp.usage.output_tokens * PRICE_OUT
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "script.json").write_text(json.dumps({**script.model_dump(), "seconds": args.seconds}, ensure_ascii=False, indent=2))
     record("script", model=MODEL, latency_s=latency, cost_usd=round(cost, 4),
-           in_tokens=resp.usage.input_tokens, out_tokens=resp.usage.output_tokens, story_chars=len(story))
+           in_tokens=resp.usage.input_tokens, out_tokens=resp.usage.output_tokens, story_chars=len(story),
+           asked=args.scenes, scenes=len(script.scenes), distinct_moments=script.distinct_moments)
     print(f"ok  {latency}s  US$ {cost:.3f}  -> out/script.json\n")
-    print(script.title)
+    print(f"{script.title}  ({len(script.scenes)} Scenes; momentos distintos na Story: {script.distinct_moments})")
+    print(f"motivo: {script.scene_count_reason}")
     for s in script.scenes:
         print(f"\n[{s.n}] {s.story_moment}\n    legenda: {s.subtitle}\n    prompt:  {s.visual_prompt}")
 

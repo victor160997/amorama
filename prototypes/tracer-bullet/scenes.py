@@ -123,6 +123,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--scene", type=int, help="só esta Scene (1-based)")
     ap.add_argument("--regen", action="store_true", help="Regeneration: gera de novo mesmo que já exista")
+    ap.add_argument("--retake", action="store_true", help="Retake do concierge (Scene reprovada na conferência interna); não conta como Regeneration")
+    ap.add_argument("--parallel", type=int, default=1, help="quantas Scenes gerar ao mesmo tempo")
     ap.add_argument("--mode", choices=["r2v", "keyframe"], default="r2v")
     ap.add_argument("--video", choices=["kling", "seedance"], default="kling")
     ap.add_argument("--upload", action="store_true", help="sobe as Fichas ao CDN do fal em vez de data URIs")
@@ -137,7 +139,7 @@ def main() -> None:
     scenes = [s for s in script["scenes"] if args.scene in (None, s["n"])]
     dest = OUT / "scenes"
     dest.mkdir(parents=True, exist_ok=True)
-    todo = [s for s in scenes if args.regen or not (dest / f"scene-{s['n']}.mp4").exists()]
+    todo = [s for s in scenes if args.regen or args.retake or not (dest / f"scene-{s['n']}.mp4").exists()]
     if not todo:
         sys.exit("Nada a gerar (as Scenes já existem; use --regen para uma Regeneration).")
 
@@ -151,12 +153,13 @@ def main() -> None:
         return
 
     sheets = sheet_urls(args.upload)
-    for s in todo:
+
+    def one(s: dict) -> None:
         n = s["n"]
         k = sum(1 for r in rows() if r["stage"] == "scene" and r.get("scene") == n and not r.get("error"))
         prompt = video_prompt(s["visual_prompt"])
-        base = {"scene": n, "attempt": k, "regeneration": k > 0, "mode": args.mode, "video": args.video, "seconds": seconds}
-        print(f"  Scene {n} tentativa {k} ...", end="", flush=True)
+        base = {"scene": n, "attempt": k, "regeneration": k > 0 and not args.retake, "retake": args.retake, "mode": args.mode, "video": args.video, "seconds": seconds}
+        print(f"  Scene {n} tentativa {k} ...", flush=True)
         try:
             keyframe_url = None
             if args.mode == "keyframe":
@@ -190,15 +193,23 @@ def main() -> None:
             video = fetch(res["video"]["url"])
         except Exception as e:  # noqa: BLE001
             err = f"{type(e).__name__}: {str(e)[:300]}"  # o fal ecoa o payload (base64) nos erros
-            print(f" FALHOU: {err}")
+            print(f"  Scene {n} FALHOU: {err}")
             record("scene", **base, error=err, cost_usd=0)
-            continue
+            return
         path = dest / f"scene-{n}.try{k}.mp4"
         path.write_bytes(video)
         shutil.copyfile(path, dest / f"scene-{n}.mp4")  # a tentativa mais recente é a que a montagem usa
         record("scene", **base, endpoint=endpoint, cost_usd=round(per_video, 4), prompt=prompt,
                arguments=strip_uris(vargs), path=str(path.relative_to(OUT.parent)), **m)
-        print(f" ok  {m['latency_s']}s  US$ {per_video:.2f}  -> {path.relative_to(OUT.parent)}")
+        print(f"  Scene {n} ok  {m['latency_s']}s  US$ {per_video:.2f}  -> {path.relative_to(OUT.parent)}")
+
+    from concurrent.futures import ThreadPoolExecutor
+
+    t_all = time.time()
+    with ThreadPoolExecutor(max_workers=max(args.parallel, 1)) as ex:
+        list(ex.map(one, todo))
+    record("batch", scenes=[s["n"] for s in todo], parallel=args.parallel, latency_s=round(time.time() - t_all, 1), cost_usd=0)
+    print(f"lote de {len(todo)} em {time.time() - t_all:.0f}s (paralelo {args.parallel})")
     print("Assista cada Scene antes de seguir. Livro-caixa: uv run report.py")
 
 

@@ -123,7 +123,7 @@ def main() -> None:
     dur = float(p["format"]["duration"])
     checks = {
         "MP4 9:16 1080x1920": (v["width"], v["height"]) == (W, H),
-        "30 a 60 s": 30 <= dur <= 60,
+        f"duração ~{len(scenes) * int(script['seconds'])} s": abs(dur - len(scenes) * int(script["seconds"])) <= 3,
         "tem música": has_audio,
         "Scenes em ordem": True,  # por construção (ordem do Script)
     }
