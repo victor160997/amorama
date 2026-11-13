@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTÓTIPO · Fluxo do Pedido (Amorama v0)</title>
+<style>
+  :root { --bg:#faf8f5; --card:#fff; --ink:#1f1b16; --mute:#6f675d; --line:#e4ded5; --accent:#b4472e; --accent-soft:#f6e4de; --ok:#2f6b47; --bad:#a12b2b; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#191715; --card:#23201d; --ink:#efe9e1; --mute:#a59c90; --line:#3a352f; --accent:#e5856c; --accent-soft:#3b2620; --ok:#7fc49a; --bad:#ee8f8f; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:1180px; margin:0 auto; padding:28px 16px 80px; }
+  h1 { font-size:24px; margin:0 0 6px; } h2 { font-size:16px; margin:0 0 10px; } h3 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--mute); margin:14px 0 6px; }
+  p { margin:0 0 10px; } .mute { color:var(--mute); } small { color:var(--mute); }
+  .tag { display:inline-block; font-size:11px; letter-spacing:.08em; text-transform:uppercase; background:var(--accent-soft); color:var(--accent); padding:2px 8px; border-radius:99px; margin-bottom:8px; }
+  .grid { display:grid; grid-template-columns:340px 1fr; gap:20px; margin-top:20px; align-items:start; }
+  @media (max-width:820px) { .grid { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:20px; }
+  .phone { border:2px solid var(--ink); border-radius:28px; padding:18px 16px; background:var(--card); min-height:520px; }
+  .phone .url { font:12px ui-monospace, monospace; color:var(--mute); border:1px solid var(--line); border-radius:99px; padding:3px 10px; margin-bottom:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .phone h2 { font-size:19px; line-height:1.25; }
+  .phone ul { padding-left:18px; margin:0 0 10px; }
+  .box { border:1px dashed var(--line); border-radius:8px; padding:8px 10px; margin:8px 0; font-size:13px; }
+  button { font:inherit; cursor:pointer; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); padding:7px 12px; margin:3px 4px 3px 0; text-align:left; }
+  button:hover { border-color:var(--accent); }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .phone button { display:block; width:100%; text-align:center; margin:6px 0; }
+  .fields { display:grid; grid-template-columns:max-content 1fr; gap:4px 16px; margin:0; }
+  .fields dt { color:var(--mute); } .fields dd { margin:0; font-weight:600; }
+  .changed { background:var(--accent-soft); border-radius:4px; padding:0 4px; }
+  .note { border-left:3px solid var(--ok); padding:6px 10px; margin-top:12px; background:color-mix(in srgb, var(--ok) 10%, transparent); border-radius:0 6px 6px 0; }
+  .note.err { border-color:var(--bad); background:color-mix(in srgb, var(--bad) 10%, transparent); }
+  .tabs { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px; }
+  .tabs button.on { background:var(--ink); color:var(--bg); border-color:var(--ink); }
+  .steps button { display:block; width:100%; } .steps button.done { opacity:.45; } .steps button.next { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); }
+  ol.log { margin:0; padding-left:20px; max-height:260px; overflow:auto; font-size:13px; } ol.log li.err { color:var(--bad); }
+  .cols { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:4px 20px; }
+</style>
+</head>
+<body>
+<main>
+  <span class="tag">Protótipo descartável · nada é salvo</span>
+  <h1>Fluxo do Pedido: o que o Casal vê em cada estado</h1>
+  <p><b>Pergunta que este protótipo responde:</b> quais são os estados de um Pedido que o front precisa exibir, quais ações são permitidas em cada um, e o que o Casal vê (tela + e-mail) em cada momento, do formulário ao Vídeo Final, incluindo Regerações, reembolso e o consentimento do par?</p>
+  <p class="mute">À esquerda, a tela que o Casal veria. À direita, o estado do Pedido. Embaixo, botões para agir como Casal, como concierge (você) ou como o relógio. Ações proibidas respondem com o motivo, em vermelho.</p>
+
+  <div class="grid">
+    <div>
+      <div class="phone" id="phone"></div>
+    </div>
+    <div>
+      <div class="card">
+        <h2>Estado do Pedido</h2>
+        <dl class="fields" id="state"></dl>
+        <div id="note"></div>
+      </div>
+      <div class="card">
+        <h2>Roteiros guiados</h2>
+        <div class="tabs" id="tabs"></div>
+        <p id="scenarioDesc" class="mute"></p>
+        <div class="steps" id="steps"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Jogo livre: todas as ações</h2>
+    <div class="cols" id="actions"></div>
+    <button id="reset">↺ Recomeçar do zero</button>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 1fr">
+    <div class="card"><h2>E-mails enviados</h2><ol class="log" id="emails"></ol></div>
+    <div class="card"><h2>Histórico</h2><ol class="log" id="log"></ol></div>
+  </div>
+
+  <div class="card">
+    <h2>Suposições que eu fiz e você precisa confirmar ou derrubar</h2>
+    <ol>
+      <li><b>Pagamento antes do consentimento do par.</b> Quem pede envia as fotos dos dois, paga, e só então o par recebe o Partner Link. As fotos do par ficam em quarentena (não saem do sistema) até ele consentir; 7 dias sem resposta = reembolso automático.</li>
+      <li><b>O relógio de 24h só corre quando a bola está com o concierge</b> (gerando Fichas ou Cenas). Parado enquanto espera o par ou a Approval.</li>
+      <li><b>Cada Ficha é decidida sozinha.</b> Aceitar a Pessoa 1 e pedir Regeração da Pessoa 2 é possível; a Approval acontece quando as duas estão aceitas. Aceite não se desfaz.</li>
+      <li><b>Regerações de Ficha esgotadas (3) sem aceite:</b> o Casal escolhe entre aceitar a última ou pedir reembolso.</li>
+      <li><b>Uma Regeração de Cena por vez.</b> A segunda só pode ser pedida depois de escolher a tomada da primeira. Se o Casal não escolher, vale a tomada anterior.</li>
+      <li><b>Os 7 dias só bloqueiam pedidos novos.</b> Uma Regeração de Cena pedida no dia 7 ainda é entregue e escolhida depois.</li>
+      <li><b>Fotos apagadas na entrega; Fichas ficam até a janela de 7 dias fechar</b> (as Regerações de Cena usam as Fichas, não as fotos); Vídeo Final some aos 90 dias.</li>
+      <li><b>Campo da História:</b> 4 perguntas-guia (como se conheceram, primeiro encontro, um momento difícil ou engraçado, onde estão hoje) + mínimo de 600 caracteres somados.</li>
+      <li><b>Fotos reprovadas pelo concierge depois do pagamento:</b> o Pedido pausa e pede novas fotos pelo Order Link, em vez de reembolsar direto.</li>
+    </ol>
+  </div>
+</main>
+
+<!-- ============ MÓDULO PURO: máquina de estados do Pedido (sem DOM) ============ -->
+<script>
+const OrderFlow = (() => {
+  const MAX_SHEET_REGENS = 3, MAX_SCENE_REGENS = 2, SCENES = 9;
+  const BEFORE_APPROVAL = ['awaiting_partner_consent', 'needs_new_photos', 'generating_sheets', 'awaiting_approval'];
+
+  const initial = () => ({
+    state: 'draft',
+    sheets: { a: { status: 'none', regens: 0 }, b: { status: 'none', regens: 0 } },
+    approval: false,
+    deadlineBlown: false,
+    sceneRegens: 0,
+    windowOpen: false,
+    pendingScene: null,
+    replacedScenes: [],
+    refundReason: null,
+    photos: 'none', sheetFiles: 'none', video: 'none',
+    emails: [],
+  });
+
+  const refund = (o, reason) => { o.state = 'refunded'; o.refundReason = reason; o.photos = 'deleted'; o.sheetFiles = 'deleted'; o.emails.push('Pessoa 1: reembolso integral confirmado (' + reason + ')'); };
+
+  const settleSheets = (o) => {
+    const st = [o.sheets.a.status, o.sheets.b.status];
+    if (st.includes('ready')) o.state = 'awaiting_approval';
+    else if (st.includes('generating')) o.state = 'generating_sheets';
+    else { o.approval = true; o.state = 'generating_scenes'; o.emails.push('Pessoa 1: Approval registrada, seu Vídeo Final está sendo criado'); }
+  };
+
+  function transition(prev, action) {
+    const o = structuredClone(prev);
+    const no = (msg) => ({ order: prev, error: msg });
+    const need = (...states) => states.includes(o.state);
+    switch (action.type) {
+      case 'SUBMIT_ORDER':
+        if (!need('draft')) return no('O formulário só existe antes do Pedido ser criado.');
+        if (action.shortStory) return no('História curta demais: responda às perguntas-guia até somar 600 caracteres (precisamos de 8 momentos).');
+        o.state = 'awaiting_payment'; o.photos = 'quarantine'; break;
+      case 'PAY':
+        if (!need('awaiting_payment')) return no('Não há pagamento pendente.');
+        o.state = 'awaiting_partner_consent';
+        o.emails.push('Pessoa 1: pagamento confirmado + Order Link', 'Pessoa 2: Partner Link para consentir com o uso das fotos');
+        break;
+      case 'CHECKOUT_EXPIRES':
+        if (!need('awaiting_payment')) return no('Só um checkout em aberto expira.');
+        o.state = 'abandoned'; o.photos = 'deleted'; break;
+      case 'PARTNER_CONSENT':
+        if (!need('awaiting_partner_consent')) return no('O consentimento do par só é pedido logo após o pagamento.');
+        o.state = 'generating_sheets'; o.photos = 'stored'; o.sheets.a.status = o.sheets.b.status = 'generating';
+        o.emails.push('Pessoa 1: seu par consentiu, as Fichas de Personagem ficam prontas em breve');
+        break;
+      case 'PARTNER_DECLINE':
+        if (!need('awaiting_partner_consent')) return no('O par só pode recusar enquanto o consentimento está pendente.');
+        refund(o, 'o par não consentiu'); break;
+      case 'PARTNER_TIMEOUT':
+        if (!need('awaiting_partner_consent')) return no('Os 7 dias só contam enquanto o consentimento do par está pendente.');
+        refund(o, 'o par não respondeu em 7 dias'); break;
+      case 'REQUEST_NEW_PHOTOS':
+        if (!need('generating_sheets')) return no('O concierge só pede novas fotos enquanto prepara as Fichas.');
+        o.state = 'needs_new_photos'; o.emails.push('Pessoa 1: precisamos de fotos melhores para continuar'); break;
+      case 'UPLOAD_NEW_PHOTOS':
+        if (!need('needs_new_photos')) return no('Ninguém pediu novas fotos.');
+        o.state = 'generating_sheets'; break;
+      case 'SHEETS_READY':
+        if (!need('generating_sheets')) return no('Não há Ficha sendo gerada.');
+        for (const p of ['a', 'b']) if (o.sheets[p].status === 'generating') o.sheets[p].status = 'ready';
+        o.state = 'awaiting_approval'; o.emails.push('Pessoa 1: suas Fichas de Personagem estão prontas para aprovação'); break;
+      case 'ACCEPT_SHEET': {
+        const s = o.sheets[action.person];
+        if (!need('awaiting_approval') || s.status !== 'ready') return no('Essa Ficha não está esperando decisão agora.');
+        s.status = 'accepted'; settleSheets(o); break;
+      }
+      case 'REQUEST_SHEET_REGEN': {
+        const s = o.sheets[action.person];
+        if (!need('awaiting_approval') || s.status !== 'ready') return no('Essa Ficha não está esperando decisão agora.');
+        if (s.regens >= MAX_SHEET_REGENS) return no('As 3 Regerações desta Ficha já foram usadas: aceite a Ficha ou peça reembolso.');
+        s.regens++; s.status = 'generating'; settleSheets(o); break;
+      }
+      case 'REQUEST_REFUND':
+        if (BEFORE_APPROVAL.includes(o.state)) { refund(o, 'pedido do Casal antes da Approval'); break; }
+        if (need('generating_scenes') && o.deadlineBlown) { refund(o, 'prazo de 24h estourado'); break; }
+        if (need('generating_scenes', 'delivered', 'scene_regenerating', 'choosing_take', 'closed')) return no('Depois da Approval só há reembolso se o prazo de 24h estourar.');
+        return no('Não há pagamento para reembolsar.');
+      case 'DEADLINE_BLOWN':
+        if (!need('generating_sheets', 'generating_scenes')) return no('O relógio de 24h só corre quando a bola está com o concierge.');
+        o.deadlineBlown = true; o.emails.push('Pessoa 1: atrasamos; você pode esperar ou pedir reembolso integral'); break;
+      case 'FINAL_VIDEO_READY':
+        if (!need('generating_scenes')) return no('O Vídeo Final só sai depois da Approval.');
+        o.state = 'delivered'; o.windowOpen = true; o.video = 'stored'; o.photos = 'deleted'; o.sheetFiles = 'stored';
+        o.emails.push('Pessoa 1: seu Vídeo Final está pronto'); break;
+      case 'REQUEST_SCENE_REGEN':
+        if (need('scene_regenerating', 'choosing_take')) return no('Já existe uma nova versão de Cena em andamento: escolha a tomada antes de pedir outra.');
+        if (!need('delivered', 'closed')) return no('Só dá para pedir nova versão de uma Cena depois de receber o Vídeo Final.');
+        if (!o.windowOpen) return no('O prazo de 7 dias para pedir nova versão de Cena acabou.');
+        if (o.sceneRegens >= MAX_SCENE_REGENS) return no('As 2 Regerações de Cena deste Pedido já foram usadas.');
+        o.sceneRegens++; o.pendingScene = action.scene; o.state = 'scene_regenerating'; break;
+      case 'NEW_TAKE_READY':
+        if (!need('scene_regenerating')) return no('Não há nova versão de Cena sendo gerada.');
+        o.state = 'choosing_take'; o.emails.push('Pessoa 1: a nova versão da Cena ' + o.pendingScene + ' está pronta, escolha qual fica'); break;
+      case 'CHOOSE_TAKE':
+        if (!need('choosing_take')) return no('Não há tomada para escolher.');
+        if (action.take === 'new') o.replacedScenes.push(o.pendingScene);
+        o.pendingScene = null; o.state = o.windowOpen ? 'delivered' : 'closed';
+        if (o.state === 'closed') o.sheetFiles = 'deleted'; break;
+      case 'WINDOW_ENDS':
+        if (!o.windowOpen) return no('A janela de 7 dias não está aberta.');
+        o.windowOpen = false;
+        if (o.state === 'delivered') { o.state = 'closed'; o.sheetFiles = 'deleted'; } break;
+      case 'DAYS_90':
+        if (!need('closed')) return no('Os 90 dias só vencem com o Pedido concluído.');
+        o.state = 'expired'; o.video = 'deleted'; break;
+      case 'DOWNLOAD':
+        if (!need('delivered', 'scene_regenerating', 'choosing_take', 'closed')) return no('Ainda não há (ou não há mais) Vídeo Final para baixar.');
+        break;
+      default: return no('Ação desconhecida.');
+    }
+    return { order: o };
+  }
+
+  return { initial, transition, MAX_SHEET_REGENS, MAX_SCENE_REGENS, SCENES, BEFORE_APPROVAL };
+})();
+</script>
+
+<!-- ============ CASCA DESCARTÁVEL: página ============ -->
+<script>
+const STATE_NAMES = {
+  draft: 'Rascunho (ainda não é um Pedido)', awaiting_payment: 'Aguardando pagamento', abandoned: 'Abandonado (checkout expirou)',
+  awaiting_partner_consent: 'Aguardando consentimento do par', needs_new_photos: 'Aguardando novas fotos',
+  generating_sheets: 'Criando as Fichas de Personagem', awaiting_approval: 'Aguardando Approval das Fichas',
+  generating_scenes: 'Criando o Vídeo Final', delivered: 'Entregue (janela de 7 dias aberta)',
+  scene_regenerating: 'Entregue · criando nova versão de uma Cena', choosing_take: 'Entregue · Casal escolhe a tomada',
+  closed: 'Concluído', refunded: 'Reembolsado', expired: 'Expirado (Vídeo Final apagado)',
+};
+const DATA = { none: 'não existem', quarantine: 'guardadas, em quarentena (par ainda não consentiu)', stored: 'guardadas', deleted: 'apagadas' };
+const SHEET = { none: 'ainda não existe', generating: 'sendo gerada', ready: 'pronta, esperando decisão', accepted: 'aceita' };
+const A = (label, action, actor) => ({ label, action, actor });
+const ACTIONS = [
+  A('Enviar formulário (fotos, História completa, consentimento)', { type: 'SUBMIT_ORDER' }, 'Casal'),
+  A('Enviar formulário com História curta', { type: 'SUBMIT_ORDER', shortStory: true }, 'Casal'),
+  A('Pagar (Pix ou cartão confirmado)', { type: 'PAY' }, 'Casal'),
+  A('Par consente pelo Partner Link', { type: 'PARTNER_CONSENT' }, 'Casal'),
+  A('Par recusa pelo Partner Link', { type: 'PARTNER_DECLINE' }, 'Casal'),
+  A('Enviar novas fotos', { type: 'UPLOAD_NEW_PHOTOS' }, 'Casal'),
+  A('Aceitar Ficha da Pessoa 1', { type: 'ACCEPT_SHEET', person: 'a' }, 'Casal'),
+  A('Aceitar Ficha da Pessoa 2', { type: 'ACCEPT_SHEET', person: 'b' }, 'Casal'),
+  A('Pedir Regeração da Ficha da Pessoa 1', { type: 'REQUEST_SHEET_REGEN', person: 'a' }, 'Casal'),
+  A('Pedir Regeração da Ficha da Pessoa 2', { type: 'REQUEST_SHEET_REGEN', person: 'b' }, 'Casal'),
+  A('Pedir reembolso', { type: 'REQUEST_REFUND' }, 'Casal'),
+  A('Baixar o Vídeo Final', { type: 'DOWNLOAD' }, 'Casal'),
+  A('Pedir nova versão da Cena 4', { type: 'REQUEST_SCENE_REGEN', scene: 4 }, 'Casal'),
+  A('Pedir nova versão da Cena 7', { type: 'REQUEST_SCENE_REGEN', scene: 7 }, 'Casal'),
+  A('Ficar com a nova tomada', { type: 'CHOOSE_TAKE', take: 'new' }, 'Casal'),
+  A('Ficar com a tomada anterior', { type: 'CHOOSE_TAKE', take: 'previous' }, 'Casal'),
+  A('Pedir novas fotos ao Casal', { type: 'REQUEST_NEW_PHOTOS' }, 'Concierge'),
+  A('Fichas prontas', { type: 'SHEETS_READY' }, 'Concierge'),
+  A('Vídeo Final pronto', { type: 'FINAL_VIDEO_READY' }, 'Concierge'),
+  A('Nova tomada da Cena pronta', { type: 'NEW_TAKE_READY' }, 'Concierge'),
+  A('Checkout expira sem pagamento', { type: 'CHECKOUT_EXPIRES' }, 'Relógio'),
+  A('Passam 7 dias sem resposta do par', { type: 'PARTNER_TIMEOUT' }, 'Relógio'),
+  A('Estoura o prazo de 24h', { type: 'DEADLINE_BLOWN' }, 'Relógio'),
+  A('Passam 7 dias da entrega', { type: 'WINDOW_ENDS' }, 'Relógio'),
+  A('Passam 90 dias da entrega', { type: 'DAYS_90' }, 'Relógio'),
+];
+const act = (label) => ACTIONS.find(a => a.label === label);
+
+// O que o Casal vê em cada estado: título, corpo (HTML), botões (rótulos de ACTIONS)
+function screen(o) {
+  const refundBtn = 'Pedir reembolso';
+  const sheetBlock = (p, name) => {
+    const s = o.sheets[p], left = OrderFlow.MAX_SHEET_REGENS - s.regens;
+    let h = `<div class="box"><b>Ficha da ${name}</b><br>[imagem 9:16] · ${SHEET[s.status]}<br><small>Regerações restantes: ${left} de 3</small>`;
+    if (s.status === 'ready') h += `<br><small>Ao pedir Regeração: campo "o que mudar?" (até 200 caracteres)</small>`;
+    return h + '</div>';
+  };
+  switch (o.state) {
+    case 'draft': return { url: 'amorama.com.br', title: 'A história de vocês, em animação 3D', body:
+      `<div class="box">[vídeo de exemplo, 9:16, autoplay sem som]</div>
+       <p>Um vídeo de ~80 s com personagens parecidos com vocês. <b>R$ 97,90</b> <s>R$ 120</s> nos 20 primeiros Pedidos. Pronto em até 24h.</p>
+       <div class="box">Fotos da Pessoa 1 (2 ou mais) · Fotos da Pessoa 2 (2 ou mais)<br><small>checagem automática: rosto visível, uma pessoa por foto, adulto</small></div>
+       <div class="box">História, com perguntas-guia:<br>1. Como se conheceram?<br>2. Como foi o primeiro encontro?<br>3. Um momento difícil ou engraçado?<br>4. Onde vocês estão hoje?<br><small>contador: mínimo 600 caracteres</small></div>
+       <div class="box">E-mail de quem pede · e-mail ou WhatsApp do par<br>☐ Sou maior de 18 e autorizo o uso das minhas fotos<br>☐ Meu par é maior de 18 e vai receber um link para autorizar as dele</div>`,
+      buttons: ['Enviar formulário (fotos, História completa, consentimento)', 'Enviar formulário com História curta'] };
+    case 'awaiting_payment': return { url: 'checkout.stripe.com/…', title: 'Pagamento', body:
+      `<p>Checkout hospedado do Stripe: Pix ou cartão. R$ 97,90.</p><p class="mute">Reembolso total garantido se vocês não aprovarem as Fichas de Personagem.</p>`, buttons: ['Pagar (Pix ou cartão confirmado)'] };
+    case 'abandoned': return { url: 'amorama.com.br', title: 'Pedido não concluído', body: `<p>O pagamento não foi feito e as fotos foram apagadas. O Casal recomeça do zero.</p>`, buttons: [] };
+    case 'awaiting_partner_consent': return { url: 'amorama.com.br/p/9f3k…', title: 'Falta só o seu par autorizar', body:
+      `<p>Pagamento confirmado. Enviamos um link para o seu par autorizar o uso das fotos dele. Só começamos depois disso.</p>
+       <div class="box">[Copiar link para mandar no WhatsApp]<br><small>O link vale 7 dias; sem resposta, devolvemos o valor.</small></div>
+       <div class="box"><b>O que o par vê no Partner Link:</b> as fotos dele, para que serão usadas, por quanto tempo ficam guardadas, ☐ sou maior de 18, [Autorizo] / [Não autorizo]</div>`,
+      buttons: ['Par consente pelo Partner Link', 'Par recusa pelo Partner Link', refundBtn] };
+    case 'needs_new_photos': return { url: 'amorama.com.br/p/9f3k…', title: 'Precisamos de fotos melhores', body:
+      `<p>Mensagem do concierge dizendo de quem e por quê (rosto coberto, foto escura…). Upload aqui mesmo.</p>`, buttons: ['Enviar novas fotos', refundBtn] };
+    case 'generating_sheets': return { url: 'amorama.com.br/p/9f3k…', title: o.deadlineBlown ? 'Estamos atrasados, desculpem' : 'Criando os personagens de vocês', body:
+      `<p>Linha do tempo: ✔ Pagamento · ✔ Consentimento · <b>● Personagens</b> · ○ Aprovação · ○ Vídeo</p><p>Avisamos por e-mail quando estiver pronto. Podem fechar esta página.</p>${sheetBlock('a', 'Pessoa 1')}${sheetBlock('b', 'Pessoa 2')}`, buttons: [refundBtn] };
+    case 'awaiting_approval': {
+      const b = [];
+      for (const [p, n] of [['a', '1'], ['b', '2']]) if (o.sheets[p].status === 'ready') {
+        b.push('Aceitar Ficha da Pessoa ' + n);
+        if (o.sheets[p].regens < OrderFlow.MAX_SHEET_REGENS) b.push('Pedir Regeração da Ficha da Pessoa ' + n);
+      }
+      return { url: 'amorama.com.br/p/9f3k…', title: 'Esses são vocês?', body:
+        `<p>O vídeo inteiro usa esses personagens. Depois de aprovar os dois, começamos o vídeo e não há mais reembolso por desistência.</p>${sheetBlock('a', 'Pessoa 1')}${sheetBlock('b', 'Pessoa 2')}`, buttons: [...b, refundBtn] };
+    }
+    case 'generating_scenes': return { url: 'amorama.com.br/p/9f3k…', title: o.deadlineBlown ? 'Estamos atrasados, desculpem' : 'Criando o vídeo de vocês', body:
+      `<p>Linha do tempo: ✔ Pagamento · ✔ Consentimento · ✔ Personagens · ✔ Aprovação · <b>● Vídeo</b></p><p>${o.deadlineBlown ? 'Passamos das 24h prometidas. Vocês podem esperar ou pedir o reembolso integral.' : 'Avisamos por e-mail quando estiver pronto.'}</p>`,
+      buttons: o.deadlineBlown ? [refundBtn] : [] };
+    case 'delivered': {
+      const left = OrderFlow.MAX_SCENE_REGENS - o.sceneRegens;
+      return { url: 'amorama.com.br/p/9f3k…', title: 'O vídeo de vocês está pronto', body:
+        `<div class="box">[player 9:16, ~72 s]</div><div class="box">[Compartilhar no WhatsApp] [Copiar link]</div>
+         <p><b>Alguma Cena não ficou boa?</b> Vocês podem pedir uma nova versão de até ${left} Cena(s) nos próximos 7 dias. É uma nova tomada, não uma correção: pode mudar o cenário e o enquadramento, e vocês escolhem qual fica.</p>
+         <div class="box">Grade das 9 Cenas com miniatura → tocar numa abre "o que incomodou?" (até 200 caracteres)</div>
+         ${o.replacedScenes.length ? `<small>Cenas trocadas pela nova tomada: ${o.replacedScenes.join(', ')}</small>` : ''}`,
+        buttons: ['Baixar o Vídeo Final', ...(left > 0 ? ['Pedir nova versão da Cena 4', 'Pedir nova versão da Cena 7'] : [])] };
+    }
+    case 'scene_regenerating': return { url: 'amorama.com.br/p/9f3k…', title: `Criando uma nova versão da Cena ${o.pendingScene}`, body:
+      `<div class="box">[player com o Vídeo Final atual]</div><p>Avisamos por e-mail. O vídeo atual continua disponível.</p>`, buttons: ['Baixar o Vídeo Final'] };
+    case 'choosing_take': return { url: 'amorama.com.br/p/9f3k…', title: `Cena ${o.pendingScene}: qual versão fica?`, body:
+      `<div class="box">[tomada anterior ▶]　　[nova tomada ▶]</div><p>Se vocês não escolherem, o vídeo fica com a tomada anterior.</p>`,
+      buttons: ['Ficar com a nova tomada', 'Ficar com a tomada anterior', 'Baixar o Vídeo Final'] };
+    case 'closed': return { url: 'amorama.com.br/p/9f3k…', title: 'O vídeo de vocês', body:
+      `<div class="box">[player 9:16]</div><div class="box">[Compartilhar no WhatsApp] [Copiar link]</div><p class="mute">Disponível para baixar até DD/MM (90 dias após a entrega).</p>`, buttons: ['Baixar o Vídeo Final'] };
+    case 'refunded': return { url: 'amorama.com.br/p/9f3k…', title: 'Pedido reembolsado', body:
+      `<p>Motivo: ${o.refundReason}. Valor devolvido integralmente; fotos e Fichas apagadas.</p><p class="mute">Pix: devolução em instantes. Cartão: até 10 dias na fatura.</p>`, buttons: [] };
+    case 'expired': return { url: 'amorama.com.br/p/9f3k…', title: 'Este vídeo não está mais disponível', body: `<p>Guardamos o Vídeo Final por 90 dias. Ele foi apagado.</p>`, buttons: [] };
+  }
+}
+
+const SCENARIOS = [
+  { name: 'Caminho feliz', desc: 'Tudo dá certo de primeira. Repare em quando cada e-mail sai e quando fotos e Fichas são apagadas.',
+    steps: ['Enviar formulário (fotos, História completa, consentimento)', 'Pagar (Pix ou cartão confirmado)', 'Par consente pelo Partner Link', 'Fichas prontas', 'Aceitar Ficha da Pessoa 1', 'Aceitar Ficha da Pessoa 2', 'Vídeo Final pronto', 'Baixar o Vídeo Final', 'Passam 7 dias da entrega', 'Passam 90 dias da entrega'] },
+  { name: 'Ficha que não convence', desc: 'A Pessoa 1 é aceita de primeira; a Pessoa 2 gasta as 3 Regerações. A 4ª tentativa é barrada e sobram duas saídas: aceitar ou reembolso.',
+    steps: ['Enviar formulário (fotos, História completa, consentimento)', 'Pagar (Pix ou cartão confirmado)', 'Par consente pelo Partner Link', 'Fichas prontas', 'Aceitar Ficha da Pessoa 1', 'Pedir Regeração da Ficha da Pessoa 2', 'Fichas prontas', 'Pedir Regeração da Ficha da Pessoa 2', 'Fichas prontas', 'Pedir Regeração da Ficha da Pessoa 2', 'Fichas prontas', 'Pedir Regeração da Ficha da Pessoa 2', 'Pedir reembolso'] },
+  { name: 'O par não autoriza', desc: 'Quem pede paga, mas o par some. Depois, tente o que não deveria ser possível: gerar Fichas sem consentimento.',
+    steps: ['Enviar formulário com História curta', 'Enviar formulário (fotos, História completa, consentimento)', 'Pagar (Pix ou cartão confirmado)', 'Fichas prontas', 'Passam 7 dias sem resposta do par'] },
+  { name: 'Nova versão de Cena', desc: 'Depois da entrega o Casal pede nova versão de duas Cenas, fica com uma tomada nova e uma anterior, tenta uma terceira e tenta pedir reembolso.',
+    steps: ['Enviar formulário (fotos, História completa, consentimento)', 'Pagar (Pix ou cartão confirmado)', 'Par consente pelo Partner Link', 'Fichas prontas', 'Aceitar Ficha da Pessoa 1', 'Aceitar Ficha da Pessoa 2', 'Vídeo Final pronto', 'Pedir nova versão da Cena 4', 'Pedir nova versão da Cena 7', 'Nova tomada da Cena pronta', 'Ficar com a nova tomada', 'Pedir nova versão da Cena 7', 'Nova tomada da Cena pronta', 'Ficar com a tomada anterior', 'Pedir nova versão da Cena 4', 'Pedir reembolso'] },
+  { name: 'Pedido no último dia', desc: 'O Casal pede nova versão de uma Cena e os 7 dias vencem antes de a tomada ficar pronta. O pedido ainda é honrado, mas não cabe um segundo.',
+    steps: ['Enviar formulário (fotos, História completa, consentimento)', 'Pagar (Pix ou cartão confirmado)', 'Par consente pelo Partner Link', 'Fichas prontas', 'Aceitar Ficha da Pessoa 1', 'Aceitar Ficha da Pessoa 2', 'Vídeo Final pronto', 'Pedir nova versão da Cena 4', 'Passam 7 dias da entrega', 'Nova tomada da Cena pronta', 'Ficar com a nova tomada', 'Pedir nova versão da Cena 7'] },
+  { name: 'Atraso de 24h', desc: 'Depois da Approval o reembolso está fechado, até o prazo estourar. Aí ele reabre.',
+    steps: ['Enviar formulário (fotos, História completa, consentimento)', 'Pagar (Pix ou cartão confirmado)', 'Par consente pelo Partner Link', 'Fichas prontas', 'Aceitar Ficha da Pessoa 1', 'Aceitar Ficha da Pessoa 2', 'Pedir reembolso', 'Estoura o prazo de 24h', 'Pedir reembolso'] },
+  { name: 'Fotos ruins', desc: 'O concierge olha as fotos depois do pagamento e pede outras. O Casal pode mandar ou desistir.',
+    steps: ['Enviar formulário (fotos, História completa, consentimento)', 'Pagar (Pix ou cartão confirmado)', 'Par consente pelo Partner Link', 'Pedir novas fotos ao Casal', 'Enviar novas fotos', 'Fichas prontas'] },
+];
+
+let order = OrderFlow.initial(), prevView = {}, log = [], lastNote = null, tab = 0, step = 0;
+const $ = (id) => document.getElementById(id);
+
+function view(o) {
+  return {
+    'Estado': STATE_NAMES[o.state],
+    'Ficha da Pessoa 1': `${SHEET[o.sheets.a.status]} · ${o.sheets.a.regens}/3 Regerações usadas`,
+    'Ficha da Pessoa 2': `${SHEET[o.sheets.b.status]} · ${o.sheets.b.regens}/3 Regerações usadas`,
+    'Approval': o.approval ? 'dada' : 'ainda não',
+    'Reembolso por desistência': OrderFlow.BEFORE_APPROVAL.includes(o.state) ? 'disponível' : (o.state === 'generating_scenes' && o.deadlineBlown ? 'disponível (atraso)' : 'indisponível'),
+    'Prazo de 24h': o.deadlineBlown ? 'estourado' : 'dentro do prazo',
+    'Regerações de Cena': `${o.sceneRegens}/2 usadas` + (o.pendingScene ? ` · Cena ${o.pendingScene} em andamento` : ''),
+    'Janela de 7 dias': o.windowOpen ? 'aberta' : (o.video === 'none' ? 'ainda não abriu' : 'fechada'),
+    'Fotos': DATA[o.photos], 'Fichas (arquivos)': DATA[o.sheetFiles], 'Vídeo Final': o.video === 'stored' ? 'guardado' : o.video === 'deleted' ? 'apagado' : 'não existe',
+  };
+}
+
+function dispatch(a) {
+  const r = OrderFlow.transition(order, a.action);
+  if (r.error) { lastNote = { err: true, text: `${a.actor}: "${a.label}" → não permitido. ${r.error}` }; log.push({ err: true, text: lastNote.text }); }
+  else { prevView = view(order); order = r.order; lastNote = { text: `${a.actor}: ${a.label}` }; log.push({ text: lastNote.text }); }
+  render();
+}
+
+function render() {
+  const s = screen(order);
+  $('phone').innerHTML = `<div class="url">🔒 ${s.url}</div><h2>${s.title}</h2>${s.body}` + s.buttons.map((b, i) => `<button class="${i === 0 ? 'primary' : ''}" data-a="${b}">${b}</button>`).join('');
+  const v = view(order);
+  $('state').innerHTML = Object.entries(v).map(([k, val]) => `<dt>${k}</dt><dd><span class="${prevView[k] !== undefined && prevView[k] !== val ? 'changed' : ''}">${val}</span></dd>`).join('');
+  $('note').innerHTML = lastNote ? `<div class="note ${lastNote.err ? 'err' : ''}">${lastNote.text}</div>` : '';
+  $('actions').innerHTML = ['Casal', 'Concierge', 'Relógio'].map(actor => `<div><h3>${actor}</h3>${ACTIONS.filter(a => a.actor === actor).map(a => `<button data-a="${a.label}">${a.label}</button>`).join('')}</div>`).join('');
+  $('emails').innerHTML = order.emails.map(e => `<li>${e}</li>`).join('') || '<small>nenhum ainda</small>';
+  $('log').innerHTML = log.map(l => `<li class="${l.err ? 'err' : ''}">${l.text}</li>`).join('') || '<small>vazio</small>';
+  $('tabs').innerHTML = SCENARIOS.map((sc, i) => `<button class="${i === tab ? 'on' : ''}" data-tab="${i}">${sc.name}</button>`).join('');
+  const sc = SCENARIOS[tab];
+  $('scenarioDesc').textContent = sc.desc + ' Clicar no primeiro passo recomeça do zero.';
+  $('steps').innerHTML = sc.steps.map((l, i) => `<button class="${i < step ? 'done' : i === step ? 'next' : ''}" data-step="${i}">${i + 1}. ${act(l).actor}: ${l}</button>`).join('');
+}
+
+function reset() { order = OrderFlow.initial(); prevView = {}; log = []; lastNote = null; }
+
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.id === 'reset') { reset(); step = 0; render(); }
+  else if (b.dataset.tab) { tab = +b.dataset.tab; step = 0; reset(); render(); }
+  else if (b.dataset.step) { const i = +b.dataset.step; if (i !== step) return; if (i === 0) reset(); step++; dispatch(act(SCENARIOS[tab].steps[i])); }
+  else if (b.dataset.a) dispatch(act(b.dataset.a));
+});
+render();
+</script>
+</body>
+</html>
