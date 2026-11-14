@@ -12,8 +12,16 @@ _Avoid_: Job, request, project, purchase
 Exactly two people who appear in the Order's photos and in the Final Video. In v0 there are no pets, children or groups.
 _Avoid_: Users, customers, clients
 
+**Requester** (Solicitante):
+The person of the Couple who creates the Order: uploads the photos of both, writes the Story, pays, gives consent and Approval, and receives the Order Link. The only person who acts in an Order.
+_Avoid_: User, customer, buyer, uploader
+
+**Partner** (Par):
+The other person of the Couple. Appears in the photos and in the Final Video but takes no action in the Order, which may be a surprise gift to them.
+_Avoid_: Recipient, second user, spouse
+
 **Story** (História):
-The free text the Couple writes about themselves (how they met, a special moment). The raw input to the Script.
+The free text the Requester writes about the Couple (how they met, a special moment). The raw input to the Script.
 _Avoid_: Prompt, description, brief
 
 **Script** (Roteiro):
@@ -21,19 +29,19 @@ The structured breakdown of the Story into 8–10 Scenes, each with a visual pro
 _Avoid_: Storyboard, plan, prompts
 
 **Character Sheet** (Ficha de Personagem):
-The reference image of one person of the Couple rendered in the house style. One per person; the thing the Couple approves before any Scene is generated.
+The reference image of one person of the Couple rendered in the house style. One per person; the thing the Requester approves before any Scene is generated.
 _Avoid_: Avatar, character, reference image
 
 **Approval** (Aprovação):
-The Couple's explicit acceptance of both Character Sheets. Scene generation never starts without it.
+The Requester's explicit acceptance of both Character Sheets. Scene generation never starts without it.
 _Avoid_: Confirmation, sign-off, review
 
 **Regeneration** (Regeração):
-A repeat generation of a Character Sheet or a Scene requested by the Couple because they did not accept the previous result. Counted against the Order's entitlement. For a Scene it is a new take, not a correction: the Couple chooses whether the new or the previous one enters the Final Video.
+A repeat generation of a Character Sheet or a Scene requested by the Requester because they did not accept the previous result. Counted against the Order's entitlement. For a Scene it is a new take, not a correction: the Requester chooses whether the new or the previous one enters the Final Video.
 _Avoid_: Retry, redo, re-render, fix, correction
 
 **Retake** (Retomada):
-A repeat generation of a Scene made by the concierge before delivery, because the Scene failed the internal quality check. The Couple never sees it and it is not counted against the Order's entitlement.
+A repeat generation of a Scene made by the concierge before delivery, because the Scene failed the internal quality check. The Requester never sees it and it is not counted against the Order's entitlement.
 _Avoid_: Regeneration, internal regeneration, retry
 
 **Scene** (Cena):
@@ -49,9 +57,9 @@ The single, fixed 3D-animation look every Character Sheet and Scene is rendered 
 _Avoid_: Theme, template, Pixar-style, Disney-style
 
 **Order Link** (Link do Pedido):
-The secret URL, sent by e-mail, through which the Couple follows the Order, gives Approval and downloads the Final Video. Replaces a login.
+The secret URL, sent by e-mail, through which the Requester follows the Order, gives Approval and downloads the Final Video. Replaces a login.
 _Avoid_: Account, dashboard, magic link
 
 **Concierge Mode** (Modo concierge):
-The v0 operating mode in which a human runs the generation pipeline by hand for each Order while the Couple sees only the web flow.
+The v0 operating mode in which a human runs the generation pipeline by hand for each Order while the Requester sees only the web flow.
 _Avoid_: Manual mode, beta
